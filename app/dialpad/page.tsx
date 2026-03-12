@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Device, Call } from '@twilio/voice-sdk';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { AuthWrapper } from '@/components/auth-wrapper';
 import {
   Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX,
   Plus, MessageSquare, Radio, ChevronLeft, Delete,
-  PhoneIncoming, PhoneMissed, PhoneOutgoing
+  PhoneIncoming, PhoneMissed, PhoneOutgoing, Search
 } from 'lucide-react';
 
 interface CallLog {
@@ -48,6 +50,7 @@ const StatusDot = ({ status }: { status: string }) => {
 };
 
 export default function DialpadPage() {
+  const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isCallActive, setIsCallActive] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -276,7 +279,8 @@ export default function DialpadPage() {
   ).filter((num) => num !== process.env.NEXT_PUBLIC_TWILIO_NUMBER);
 
   return (
-    <>
+    <AuthWrapper>
+      <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -823,6 +827,16 @@ export default function DialpadPage() {
             <div className="vl-title">VoiceLink</div>
             <div className="vl-subtitle">Professional Communication Hub</div>
           </div>
+          <div style={{ marginLeft: 'auto' }}>
+            <Button
+              onClick={() => router.push('/search')}
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Search size={16} />
+              Search History
+            </Button>
+          </div>
         </div>
 
         <div className="vl-grid">
@@ -1127,6 +1141,7 @@ export default function DialpadPage() {
           )}
         </div>
       </div>
-    </>
+      </>
+    </AuthWrapper>
   );
 }

@@ -2,12 +2,20 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { isAuthenticated } from '@/lib/auth';
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push('/dialpad');
+    // Check if user has valid session token
+    if (isAuthenticated()) {
+      // User is authenticated, go to dialpad
+      router.push('/dialpad');
+    } else {
+      // User not authenticated, go to auth page
+      router.push('/auth');
+    }
   }, [router]);
 
   return (
