@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Device, Call } from '@twilio/voice-sdk';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useAuth } from '@/components/auth-provider';
 import {
   Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX,
   Plus, MessageSquare, Radio, ChevronLeft, Delete,
-  PhoneIncoming, PhoneMissed, PhoneOutgoing
+  PhoneIncoming, PhoneMissed, PhoneOutgoing, LogOut, History
 } from 'lucide-react';
 
 interface CallLog {
@@ -48,6 +50,8 @@ const StatusDot = ({ status }: { status: string }) => {
 };
 
 export default function DialpadPage() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading, logout } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isCallActive, setIsCallActive] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -64,6 +68,18 @@ export default function DialpadPage() {
   const [recordings, setRecordings] = useState<any[]>([]);
   const [twilioCalls, setTwilioCalls] = useState<any[]>([]);
   const [twilioMessages, setTwilioMessages] = useState<any[]>([]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   const deviceRef = useRef<Device | null>(null);
   const activeConnectionRef = useRef<Call | null>(null);
@@ -274,6 +290,29 @@ export default function DialpadPage() {
   const uniqueContacts = Array.from(
     new Set([...twilioMessages.map(msg => msg.from), ...twilioMessages.map(msg => msg.to)])
   ).filter((num) => num !== process.env.NEXT_PUBLIC_TWILIO_NUMBER);
+
+  // Show loading while checking auth
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0c10',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <div style={{
+          width: 32,
+          height: 32,
+          border: '2px solid #2a2d36',
+          borderTopColor: '#4f8ef7',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -811,6 +850,38 @@ export default function DialpadPage() {
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 999px; }
+
+        /* Header buttons */
+        .vl-header-actions {
+          display: flex;
+          gap: 8px;
+          margin-left: auto;
+        }
+        .vl-header-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          border-radius: 8px;
+          background: var(--surface2);
+          border: 1px solid var(--border);
+          color: var(--text2);
+          font-size: 12px;
+          font-family: var(--mono);
+          cursor: pointer;
+          transition: background 0.12s, border-color 0.12s, color 0.12s;
+          text-decoration: none;
+        }
+        .vl-header-btn:hover {
+          background: var(--surface3);
+          border-color: var(--border2);
+          color: var(--text);
+        }
+        .vl-header-btn.logout:hover {
+          background: rgba(239, 68, 68, 0.1);
+          border-color: rgba(239, 68, 68, 0.3);
+          color: #fca5a5;
+        }
       `}</style>
 
       <div className="vl-root">
@@ -822,6 +893,16 @@ export default function DialpadPage() {
           <div>
             <div className="vl-title">VoiceLink</div>
             <div className="vl-subtitle">Professional Communication Hub</div>
+          </div>
+          <div className="vl-header-actions">
+            <a href="/history" className="vl-header-btn">
+              <History size={14} />
+              History
+            </a>
+            <button className="vl-header-btn logout" onClick={handleLogout}>
+              <LogOut size={14} />
+              Logout
+            </button>
           </div>
         </div>
 
