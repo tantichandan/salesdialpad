@@ -51,6 +51,7 @@ export default function HistoryPage() {
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [recordings, setRecordings] = useState<RecordingRecord[]>([]);
   const [error, setError] = useState('');
+  const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -312,18 +313,38 @@ export default function HistoryPage() {
                   {messages.map((msg) => {
                     const isSent = msg.direction?.includes('outbound');
                     const number = isSent ? msg.to : msg.from;
+                    const isExpanded = expandedMessage === msg.sid;
                     return (
-                      <div key={msg.sid} className="vl-result-item">
-                        <div className={`vl-result-icon ${isSent ? 'out' : 'in'}`}>
-                          <MessageSquare size={14} />
+                      <div 
+                        key={msg.sid} 
+                        className={`vl-message-item ${isExpanded ? 'expanded' : ''}`}
+                        onClick={() => setExpandedMessage(isExpanded ? null : msg.sid)}
+                      >
+                        <div className="vl-message-header">
+                          <div className={`vl-result-icon ${isSent ? 'out' : 'in'}`}>
+                            <MessageSquare size={14} />
+                          </div>
+                          <div className="vl-message-info">
+                            <div className="vl-message-number">
+                              <span className="vl-message-direction">{isSent ? 'To:' : 'From:'}</span>
+                              {number}
+                            </div>
+                            {!isExpanded && (
+                              <div className="vl-message-preview">{msg.body}</div>
+                            )}
+                          </div>
+                          <div className="vl-result-meta">
+                            <div className="vl-result-status-badge">{msg.status}</div>
+                            <div className="vl-result-date">{formatDate(msg.dateCreated)}</div>
+                          </div>
                         </div>
-                        <div className="vl-result-info">
-                          <div className="vl-result-number">{number}</div>
-                          <div className="vl-result-body">{msg.body}</div>
-                        </div>
-                        <div className="vl-result-meta">
-                          <div className="vl-result-status-badge">{msg.status}</div>
-                          <div className="vl-result-date">{formatDate(msg.dateCreated)}</div>
+                        {isExpanded && (
+                          <div className="vl-message-body-full">
+                            {msg.body}
+                          </div>
+                        )}
+                        <div className="vl-message-tap-hint">
+                          {isExpanded ? 'Tap to collapse' : 'Tap to expand'}
                         </div>
                       </div>
                     );
@@ -737,6 +758,80 @@ const historyStyles = `
     max-width: 300px;
   }
 
+  /* Message Item */
+  .vl-message-item {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .vl-message-item:hover {
+    border-color: var(--border2);
+  }
+  .vl-message-item.expanded {
+    background: var(--surface3);
+    border-color: var(--accent);
+  }
+
+  .vl-message-header {
+    display: flex;
+    align-items: center;
+  }
+
+  .vl-message-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .vl-message-number {
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--mono);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .vl-message-direction {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 400;
+  }
+
+  .vl-message-preview {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+  }
+
+  .vl-message-body-full {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .vl-message-tap-hint {
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--text3);
+    text-align: center;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
   .vl-result-meta {
     margin-left: auto;
     text-align: right;
@@ -816,6 +911,20 @@ const historyStyles = `
     }
     .vl-result-body {
       max-width: 150px;
+    }
+    .vl-message-preview {
+      max-width: 150px;
+    }
+    .vl-message-header {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .vl-result-meta {
+      width: 100%;
+      text-align: left;
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
     }
   }
 `;

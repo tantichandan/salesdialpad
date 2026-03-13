@@ -23,17 +23,22 @@ export async function POST(request: NextRequest) {
         to
       );
     } else if (from) {
-      // INCOMING CALL
+      // INCOMING CALL - Connect directly to browser client
       response.say(
-  { voice: "alice" },
-  "Thank you for calling. Press 1 to speak with sales, or 2 for support."
-);
+        { voice: "alice" },
+        "Please hold while we connect your call."
+      );
 
-      response.gather({
-        numDigits: 1,
-        action: "/api/voice/gather",
+      const dial = response.dial({
+        callerId: from,
+        record: "record-from-answer",
+        timeout: 30,
+        action: "/api/voice/status",
         method: "POST",
       });
+      
+      // Connect to the browser client
+      dial.client("voicelink-user");
     }
 
     return new NextResponse(response.toString(), {
