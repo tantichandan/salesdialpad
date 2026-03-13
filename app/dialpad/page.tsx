@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Device, Call } from '@twilio/voice-sdk';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -895,10 +896,10 @@ export default function DialpadPage() {
             <div className="vl-subtitle">Professional Communication Hub</div>
           </div>
           <div className="vl-header-actions">
-            <a href="/history" className="vl-header-btn">
+            <Link href="/history" className="vl-header-btn">
               <History size={14} />
               History
-            </a>
+            </Link>
             <button className="vl-header-btn logout" onClick={handleLogout}>
               <LogOut size={14} />
               Logout

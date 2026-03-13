@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
 import {
   Phone, MessageSquare, Radio, ChevronLeft, Search,
@@ -144,10 +145,10 @@ export default function HistoryPage() {
       <div className="vl-history-root">
         {/* Header */}
         <div className="vl-history-header">
-          <a href="/dialpad" className="vl-back-link">
+          <Link href="/dialpad" className="vl-back-link">
             <ChevronLeft size={16} />
             Back to Dialpad
-          </a>
+          </Link>
           <div className="vl-history-title-wrap">
             <h1 className="vl-history-title">History Search</h1>
             <p className="vl-history-subtitle">Search call logs, messages, and recordings by date</p>
