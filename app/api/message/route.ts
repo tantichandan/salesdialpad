@@ -8,7 +8,7 @@ const client = twilio(
 
 export async function GET() {
   try {
-    const messages = await client.messages.list({ limit: 20 });
+    const messages = await client.messages.list({ limit: 10 });
 
     const formatted = messages.map((msg) => ({
       sid: msg.sid,

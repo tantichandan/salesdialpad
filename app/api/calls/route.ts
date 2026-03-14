@@ -8,7 +8,7 @@ export async function GET() {
       process.env.TWILIO_AUTH_TOKEN!
     );
 
-    const calls = await client.calls.list({ limit: 20 });
+    const calls = await client.calls.list({ limit: 10 });
 
     const formatted = calls.map((call) => ({
       sid: call.sid,
