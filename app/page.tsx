@@ -11,7 +11,7 @@ export default function Home() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        router.push('/dialpad');
+        router.push('/dashboard');
       } else {
         router.push('/login');
       }
