@@ -69,6 +69,9 @@ export default function DialpadPage() {
   const [recordings, setRecordings] = useState<any[]>([]);
   const [twilioCalls, setTwilioCalls] = useState<any[]>([]);
   const [twilioMessages, setTwilioMessages] = useState<any[]>([]);
+  const [incomingPhoneNumber, setIncomingPhoneNumber] = useState<string>('');
+  const [forwardingEnabled, setForwardingEnabled] = useState(false);
+  const [forwardingNumber, setForwardingNumber] = useState('');
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -135,12 +138,15 @@ export default function DialpadPage() {
           activeConnectionRef.current = null;
         });
 
-        device.on('incoming', (call: Call) => {
-          if (!isMounted) return;
-          setIncomingCall(call);
-          activeConnectionRef.current = call;
-          setCallStatus('Incoming call...');
-        });
+  device.on('incoming', (call: Call) => {
+  if (!isMounted) return;
+  // Extract phone number from incoming call
+  const phoneNum = call.parameters?.From || 'Unknown';
+  setIncomingPhoneNumber(phoneNum);
+  setIncomingCall(call);
+  activeConnectionRef.current = call;
+  setCallStatus('Incoming call...');
+  });
 
         await device.register();
         deviceRef.current = device;
@@ -190,6 +196,20 @@ export default function DialpadPage() {
     fetchMessages();
   }, []);
 
+  useEffect(() => {
+    const loadForwardingConfig = async () => {
+      try {
+        const res = await fetch('/api/call-forwarding');
+        const data = await res.json();
+        setForwardingEnabled(data.forwardingEnabled || false);
+        setForwardingNumber(data.forwardingNumber || '');
+      } catch (error) {
+        console.error('Failed to load forwarding config:', error);
+      }
+    };
+    loadForwardingConfig();
+  }, []);
+
   const handleDial = async () => {
     const currentNumber = phoneNumber.trim();
     if (!currentNumber || !deviceRef.current) return;
@@ -217,6 +237,32 @@ export default function DialpadPage() {
   };
 
   const handleSpeaker = () => { setIsSpeakerOn(!isSpeakerOn); };
+
+  const saveForwardingConfig = async (enabled: boolean, number: string) => {
+    try {
+      await fetch('/api/call-forwarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ forwardingEnabled: enabled, forwardingNumber: number })
+      });
+    } catch (error) {
+      console.error('Failed to save forwarding config:', error);
+    }
+  };
+
+  const handleForwardingToggle = async () => {
+    const newState = !forwardingEnabled;
+    setForwardingEnabled(newState);
+    await saveForwardingConfig(newState, forwardingNumber);
+  };
+
+  const handleForwardingNumberChange = (number: string) => {
+    setForwardingNumber(number);
+  };
+
+  const handleSaveForwarding = async () => {
+    await saveForwardingConfig(forwardingEnabled, forwardingNumber);
+  };
 
   const handleRecord = async () => {
     if (!activeConnectionRef.current) return;
@@ -914,11 +960,11 @@ export default function DialpadPage() {
             {incomingCall && (
               <div className="vl-incoming">
                 <div className="vl-incoming-icon">
-                  <Phone size={16} color="#22c55e" />
+                  <Phone size={20} color="#22c55e" />
                 </div>
                 <div className="vl-incoming-text">
                   <div className="vl-incoming-label">Incoming Call</div>
-                  <div className="vl-incoming-num">Unknown</div>
+                  <div className="vl-incoming-num">{incomingPhoneNumber || 'Unknown'}</div>
                 </div>
                 <button className="vl-btn-accept" onClick={handleAccept}>Accept</button>
                 <button className="vl-btn-reject" onClick={handleReject}>Decline</button>
@@ -1187,6 +1233,66 @@ export default function DialpadPage() {
                   </div>
                 )}
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* Call Forwarding Settings */}
+        <div className="vl-rec-section">
+          <div className="vl-rec-title">
+            <span className="vl-rec-title-dot" />
+            Call Forwarding
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'var(--surface2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+            <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--sans)' }}>
+                Enable Call Forwarding
+              </label>
+              <input
+                type="checkbox"
+                checked={forwardingEnabled}
+                onChange={handleForwardingToggle}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+            </div>
+            {forwardingEnabled && (
+              <>
+                <input
+                  type="tel"
+                  placeholder="Enter forwarding number"
+                  value={forwardingNumber}
+                  onChange={(e) => handleForwardingNumberChange(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    fontSize: '13px',
+                    fontFamily: 'var(--mono)',
+                    backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    color: 'var(--text)',
+                    marginBottom: '8px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  onClick={handleSaveForwarding}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    backgroundColor: '#3b82f6',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--sans)'
+                  }}
+                >
+                  Save
+                </button>
+              </>
             )}
           </div>
         </div>
